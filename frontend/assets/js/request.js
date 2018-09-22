@@ -1,7 +1,11 @@
 function searchHuman() {
+    const infoText = document.getElementById('infoText');
     const name = document.getElementById('nameInput').value;
     const count = document.getElementById('countInput').value;
+    infoText.style.display = 'block';
+    infoText.innerText = 'This will take some time...';
     httpGet('../backend/request.php?name=' + name + '&count=' + count, response => {
+        infoText.style.display = 'none';
         document.getElementById('list').innerHTML = response;
     });
 }
