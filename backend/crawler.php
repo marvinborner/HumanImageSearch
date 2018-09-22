@@ -9,6 +9,7 @@ require 'mysqlConf.inc';
 require 'request.php';
 
 $name = 'Marvin';
+$instagramPrefix = 'https://instagram.fmuc4-1.fna.fbcdn.net/vp/';
 while (true) {
     crawl();
     $name = getFromQueue();
@@ -16,21 +17,24 @@ while (true) {
 
 function crawl()
 {
-    global $name;
-    if (!checkCrawled($name)) {
+    global $name, $instagramPrefix;
+    if (($name !== '') && !checkCrawled($name)) {
         print 'Crawling ' . $name . " now!\n";
         $allUsers = getData($name, 100);
         foreach ($allUsers as $user) {
             $userObject = $user['entry_data']['ProfilePage'][0]['graphql']['user'];
-            $url = $userObject['profile_pic_url_hd'];
+            $url = substr($userObject['profile_pic_url_hd'], strlen($instagramPrefix));
             if (!checkCompleted($url)) {
-                $faceData = json_decode(exec('python3.5 FaceDetector.py ' . $url), true);
-                if ((int)$faceData['count'] > 0) {
-                    insertData(fixName($userObject['full_name']), $url);
-                } else {
-                    insertDataNoFace(fixName($userObject['full_name']), $url);
+                $usersName = fixName($userObject['full_name']);
+                if ($usersName !== '') {
+                    $faceData = json_decode(exec('python3.5 FaceDetector.py ' . $instagramPrefix . $url), true);
+                    if ((int)$faceData['count'] > 0) {
+                        insertData($usersName, $url);
+                    } else {
+                        insertDataNoFace($usersName, $url);
+                    }
+                    insertQueue(substr($usersName, 0, 5));
                 }
-                insertQueue(substr($userObject['full_name'], 0, 5));
             }
         }
         insertCrawled($name);
@@ -102,10 +106,10 @@ function getFromQueue()
 function fixName($name)
 {
     $name = str_replace(' ', '', $name);
-    $name = preg_replace("/[^A-Za-z]/", '', $name);
-    $name = implode(preg_split("/((?<=[a-z])(?=[A-Z])|(?=[A-Z][a-z]))/", $name), " ");
-    $name = trim($name, '()');
-    return $name;
+    $name = preg_replace('/[^A-Za-z]/', '', $name);
+    $name = implode(preg_split('/((?<=[a-z])(?=[A-Z])|(?=[A-Z][a-z]))/', $name), ' ');
+    $name = trim($name);
+    return ucwords(strtolower($name));
 }
 
 function initDbConnection()

@@ -5,7 +5,13 @@ import face_recognition
 import json
 import numpy as np
 import requests
+import signal
 import sys
+
+def exit_handler(signum, frame):
+    print('Exited face detection.')
+
+signal.signal(signal.SIGINT, exit_handler)
 
 response = requests.get(sys.argv[1])
 user_image = Image.open(BytesIO(response.content))
