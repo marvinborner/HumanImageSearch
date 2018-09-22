@@ -5,10 +5,7 @@
  * Time: 15:12
  */
 
-$userData = getData(urlencode($_GET['name']));
-processData($userData);
-
-function getData($fullName)
+function getData($fullName, $count)
 {
     $searchData = makeRequest('https://www.instagram.com/web/search/topsearch/?query=' . $fullName);
     $userContentJson = [];
@@ -16,7 +13,7 @@ function getData($fullName)
         return $arr['user']['username'];
     }, json_decode($searchData[0], true)['users']);
 
-    for ($i = 0; $i < $_GET['count'] ?? 5; $i++) {
+    for ($i = 0; $i < $count ?? 100; $i++) {
         if (!isset($usernames[$i])) {
             break;
         }
