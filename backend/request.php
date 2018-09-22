@@ -5,28 +5,22 @@
  * Time: 15:12
  */
 
-include 'FaceDetector.php';
-
-$totalData = 0;
 $userData = getData(urlencode($_GET['name']));
 processData($userData);
 
 function getData($fullName)
 {
-    global $totalData;
     $searchData = makeRequest('https://www.instagram.com/web/search/topsearch/?query=' . $fullName);
-    $totalData += (int)$searchData[2];
     $userContentJson = [];
     $usernames = array_map(function ($arr) {
         return $arr['user']['username'];
     }, json_decode($searchData[0], true)['users']);
 
-    for ($i = 0; $i < $_GET['count'] + 1 ?? 5; $i++) {
+    for ($i = 0; $i < $_GET['count'] ?? 5; $i++) {
         if (!isset($usernames[$i])) {
             break;
         }
         $userData = makeRequest('https://instagram.com/' . $usernames[$i] . '/');
-        $totalData += (int)$userData[2];
         $userDom = createPathFromHtml($userData[0]);
 
         // find script tag
@@ -44,14 +38,12 @@ function getData($fullName)
 
 function processData($userData)
 {
-    global $totalData;
-    print $totalData . '<br>';
     foreach ($userData as $user) {
         $userObject = $user['entry_data']['ProfilePage'][0]['graphql']['user'];
-        $faceDetector = new FaceDetector();
-        if ($faceDetector->faceDetect($userObject['profile_pic_url_hd'])) {
-            $base64encoded = base64_encode($faceDetector->toJpeg());
-            print '<img title="' . $userObject['full_name'] . '" src="data:image/jpeg;base64, ' . $base64encoded . '" />';
+        $faceData = json_decode(exec('python3.5 FaceDetector.py ' . $userObject['profile_pic_url_hd']), true);
+        if ((int)$faceData['count'] > 0) {
+            $base64string = 'data:image/jpeg;base64,';
+            print '<img onmouseover="replaceImageSource(this)" onmouseout="replaceImageSource(this)" title="' . $userObject['full_name'] . '" src="' . $base64string . $faceData['normal'] . '" data-src="' . $base64string . $faceData['feature'] . '" />';
         }
     }
 }
