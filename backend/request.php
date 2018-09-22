@@ -43,7 +43,7 @@ function processData($userData)
         $faceData = json_decode(exec('python3.5 FaceDetector.py ' . $userObject['profile_pic_url_hd']), true);
         if ((int)$faceData['count'] > 0) {
             $base64string = 'data:image/jpeg;base64,';
-            print '<img onmouseover="replaceImageSource(this)" onmouseout="replaceImageSource(this)" title="' . $userObject['full_name'] . '" src="' . $base64string . $faceData['normal'] . '" data-src="' . $base64string . $faceData['feature'] . '" />';
+            print '<img onmouseover="replaceImageSource(this)" onmouseout="replaceImageSource(this)" title="' . $userObject['full_name'] . '" src="' . $userObject['profile_pic_url_hd'] . '" data-src="' . $base64string . $faceData['feature'] . '" />';
         }
     }
 }
